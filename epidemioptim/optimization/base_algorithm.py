@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class BaseAlgorithm(ABC):
     def __init__(self, env, params):
         """
@@ -14,7 +15,7 @@ class BaseAlgorithm(ABC):
         """
         self.env = env
         self.global_params = params
-        self.algo_params = params['algo_params']
+        self.algo_params = params["algo_params"]
 
     @abstractmethod
     def learn(self, num_env_steps):
@@ -42,6 +43,7 @@ class BaseAlgorithm(ABC):
             Goal to be targeted during evaluation. If not provided, evaluation goals are used.
 
         """
+
     @abstractmethod
     def log(self, **kwargs):
         """

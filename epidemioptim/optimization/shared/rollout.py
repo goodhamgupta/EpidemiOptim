@@ -1,7 +1,9 @@
 import numpy as np
 
 
-def run_rollout(policy, env, eval, n=1, additional_keys=(), goal=None, reset_same_model=False):
+def run_rollout(
+    policy, env, eval, n=1, additional_keys=(), goal=None, reset_same_model=False
+):
     """
     Rollout function. Executes 'n' trajectories in 'env' using 'policy' with given 'goal'.
 
@@ -35,7 +37,7 @@ def run_rollout(policy, env, eval, n=1, additional_keys=(), goal=None, reset_sam
     episodes = []
     for i in range(n):
         # Setup saved values
-        episode = dict(zip(additional_keys, [[] for _ in range(len(additional_keys))] ))
+        episode = dict(zip(additional_keys, [[] for _ in range(len(additional_keys))]))
         env_states = []
         aggregated_costs = []
         actions = []
@@ -77,11 +79,13 @@ def run_rollout(policy, env, eval, n=1, additional_keys=(), goal=None, reset_sam
                 episode[k].append(info[k])
 
         # Form episode dict
-        episode.update(env_states=np.array(env_states),
-                       aggregated_costs=np.array(aggregated_costs),
-                       actions=np.array(actions),
-                       goal=goal[i],
-                       eval=eval,
-                       dones=np.array(dones))
+        episode.update(
+            env_states=np.array(env_states),
+            aggregated_costs=np.array(aggregated_costs),
+            actions=np.array(actions),
+            goal=goal[i],
+            eval=eval,
+            dones=np.array(dones),
+        )
         episodes.append(episode)
     return episodes

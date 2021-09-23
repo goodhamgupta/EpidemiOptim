@@ -1,6 +1,8 @@
 from epidemioptim.environments.cost_functions.costs.death_toll_cost import DeathToll
 from epidemioptim.environments.cost_functions.costs.gdp_recess_cost import GdpRecess
-from epidemioptim.environments.cost_functions.base_multi_cost_function import BaseMultiCostFunction
+from epidemioptim.environments.cost_functions.base_multi_cost_function import (
+    BaseMultiCostFunction,
+)
 import numpy as np
 
 
@@ -8,13 +10,14 @@ class MultiCostDeathGdpControllable(BaseMultiCostFunction):
     # This function computes two independent costs:
     # The sanitary cost: # of death on this day
     # The economic cost: evaluates the opportunity cost due to a reduced workforce (neoliberal offer viewpoint) in euros.
-    def __init__(self,
-                 N_region,
-                 N_country,
-                 ratio_death_to_R=0.005,
-                 use_constraints=False,
-                 beta_default=0.5
-                 ):
+    def __init__(
+        self,
+        N_region,
+        N_country,
+        ratio_death_to_R=0.005,
+        use_constraints=False,
+        beta_default=0.5,
+    ):
         """
         Multi-objective cost functions with two costs: death toll and gdp recess. It is controllable by three parameters:
         the mixing parameter beta, and one constraints of maximum cumulative cost for each of them.
@@ -39,17 +42,22 @@ class MultiCostDeathGdpControllable(BaseMultiCostFunction):
 
         # Initialize cost functions
         self.death_toll_cost = DeathToll(id_cost=0, ratio_death_to_R=ratio_death_to_R)
-        self.gdp_recess_cost = GdpRecess(id_cost=1,
-                                         N_region=N_region,
-                                         N_country=N_country,
-                                         ratio_death_to_R=ratio_death_to_R)
+        self.gdp_recess_cost = GdpRecess(
+            id_cost=1,
+            N_region=N_region,
+            N_country=N_country,
+            ratio_death_to_R=ratio_death_to_R,
+        )
 
         self.costs = [self.death_toll_cost, self.gdp_recess_cost]
         self.nb_costs = len(self.costs)
 
         if self.use_constraints:
             self.goal_dim = 3
-            self.constraints_ids = [[1], [2]]  # ids of the constraints in the goal vector (0 is mixing param)
+            self.constraints_ids = [
+                [1],
+                [2],
+            ]  # ids of the constraints in the goal vector (0 is mixing param)
         else:
             self.goal_dim = 1
             self.constraints_ids = []
@@ -90,17 +98,34 @@ class MultiCostDeathGdpControllable(BaseMultiCostFunction):
             #         goals += [[beta, c, 1]] * n
             #         goals += [[beta, 1, c]] * n
             # eval_goals =  np.array(goals)
-            eval_goals = np.array([[0, 1, 1]] * n + [[0.25, 1, 1]] * n + [[0.5, 1, 1]] * n + [[0.75, 1, 1]] * n + [[1, 1, 1]] * n + \
-                                  [[0.5, 1, 0.5]] * n + [[0.5, 1, 0.25]] * n + [[0.5, 0.5, 1]] * n + [[0.5, 0.25, 1]] * n +\
-                                  [[0.3, 1, 0.5]] * n + [[0.3, 1, 0.25]] * n + [[0.3, 0.5, 1]] * n + [[0.3, 0.25, 1]] * n + \
-                                  [[0.7, 1, 0.5]] * n + [[0.7, 1, 0.25]] * n + [[0.7, 0.5, 1]] * n + [[0.7, 0.25, 1]] * n)
+            eval_goals = np.array(
+                [[0, 1, 1]] * n
+                + [[0.25, 1, 1]] * n
+                + [[0.5, 1, 1]] * n
+                + [[0.75, 1, 1]] * n
+                + [[1, 1, 1]] * n
+                + [[0.5, 1, 0.5]] * n
+                + [[0.5, 1, 0.25]] * n
+                + [[0.5, 0.5, 1]] * n
+                + [[0.5, 0.25, 1]] * n
+                + [[0.3, 1, 0.5]] * n
+                + [[0.3, 1, 0.25]] * n
+                + [[0.3, 0.5, 1]] * n
+                + [[0.3, 0.25, 1]] * n
+                + [[0.7, 1, 0.5]] * n
+                + [[0.7, 1, 0.25]] * n
+                + [[0.7, 0.5, 1]] * n
+                + [[0.7, 0.25, 1]] * n
+            )
         else:
             goals = []
             # values = np.arange(0, 1.001, 0.025)
             # for v in values:
             #     goals += [v] * n
             # eval_goals = np.atleast_2d(np.array(goals)).transpose()
-            eval_goals = np.atleast_2d(np.array([0] * n + [0.25] * n + [0.5] * n + [0.75] * n + [1] * n)).transpose()
+            eval_goals = np.atleast_2d(
+                np.array([0] * n + [0.25] * n + [0.5] * n + [0.75] * n + [1] * n)
+            ).transpose()
         return eval_goals
 
     def get_main_goal(self):
@@ -127,8 +152,7 @@ class MultiCostDeathGdpControllable(BaseMultiCostFunction):
                     c.set_constraint(v)
             else:
                 for c in self.costs:
-                    c.set_constraint(1.)
-
+                    c.set_constraint(1.0)
 
     def compute_cost(self, previous_state, state, label_to_id, action, others={}):
         """
@@ -158,16 +182,40 @@ class MultiCostDeathGdpControllable(BaseMultiCostFunction):
         state = np.atleast_2d(state)
 
         # compute costs
-        costs = np.array([c.compute_cost(previous_state, state, label_to_id, action, others) for c in self.costs]).transpose()
-        cumulative_costs = np.array([c.compute_cumulative_cost(previous_state, state, label_to_id, action, others) for c in self.costs]).transpose()
+        costs = np.array(
+            [
+                c.compute_cost(previous_state, state, label_to_id, action, others)
+                for c in self.costs
+            ]
+        ).transpose()
+        cumulative_costs = np.array(
+            [
+                c.compute_cumulative_cost(
+                    previous_state, state, label_to_id, action, others
+                )
+                for c in self.costs
+            ]
+        ).transpose()
 
         # Apply constraints
         if self.use_constraints:
             constraints = np.array([c.normalized_constraint for c in self.costs])
-            over_constraints = np.array([[c.check_constraint(value=cumul_cost, normalized_constraint=const)
-                                          for c, cumul_cost, const in zip(self.costs, cumulative_costs[i], constraints)]
-                                         for i in range(cumulative_costs.shape[0])])
-            cost_aggregated = self.compute_aggregated_cost(costs.copy(), constraints=over_constraints)
+            over_constraints = np.array(
+                [
+                    [
+                        c.check_constraint(
+                            value=cumul_cost, normalized_constraint=const
+                        )
+                        for c, cumul_cost, const in zip(
+                            self.costs, cumulative_costs[i], constraints
+                        )
+                    ]
+                    for i in range(cumulative_costs.shape[0])
+                ]
+            )
+            cost_aggregated = self.compute_aggregated_cost(
+                costs.copy(), constraints=over_constraints
+            )
         else:
             cost_aggregated = self.compute_aggregated_cost(costs.copy())
             over_constraints = np.atleast_2d([False] * state.shape[0]).transpose()
@@ -175,26 +223,28 @@ class MultiCostDeathGdpControllable(BaseMultiCostFunction):
 
     def compute_deaths(self, previous_state, state, label_to_id, action, others={}):
         """
-        Compute death toll
+         Compute death toll
 
-       Parameters
-        ----------
-        previous_state: 2D nd.array
-            Previous model states (either 1D or 2D with first dimension # of states).
-        state: 2D nd.array
-            Current model states (either 1D or 2D with first dimension # of states).
-        label_to_id: dict
-            Mapping between state labels and indices in the state vector.
-        action: int or nd.array
-            Int for discrete envs and nd.array in continuous envs.
+        Parameters
+         ----------
+         previous_state: 2D nd.array
+             Previous model states (either 1D or 2D with first dimension # of states).
+         state: 2D nd.array
+             Current model states (either 1D or 2D with first dimension # of states).
+         label_to_id: dict
+             Mapping between state labels and indices in the state vector.
+         action: int or nd.array
+             Int for discrete envs and nd.array in continuous envs.
 
-        Returns
-        -------
-        int
-            Number of deaths
+         Returns
+         -------
+         int
+             Number of deaths
         """
 
-        return self.costs[0].compute_cost(previous_state, state, label_to_id, action, others)
+        return self.costs[0].compute_cost(
+            previous_state, state, label_to_id, action, others
+        )
 
     def compute_aggregated_cost(self, costs, beta=None, constraints=None):
         """
@@ -216,7 +266,9 @@ class MultiCostDeathGdpControllable(BaseMultiCostFunction):
         if beta is None:
             beta = self.beta
         factors = np.array([1 - beta, beta])
-        normalized_costs = np.array([cf.scale(c) for (cf, c) in zip(self.costs, costs.transpose())])
+        normalized_costs = np.array(
+            [cf.scale(c) for (cf, c) in zip(self.costs, costs.transpose())]
+        )
         cost_aggregated = np.matmul(factors, normalized_costs)
 
         if self.use_constraints:

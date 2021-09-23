@@ -3,29 +3,30 @@ import torch.nn as nn
 import numpy as np
 
 import torch.autograd as autograd
+
 USE_CUDA = torch.cuda.is_available()
-Variable = lambda *args, **kwargs: autograd.Variable(*args, **kwargs).cuda() if USE_CUDA else autograd.Variable(*args, **kwargs)
+Variable = (
+    lambda *args, **kwargs: autograd.Variable(*args, **kwargs).cuda()
+    if USE_CUDA
+    else autograd.Variable(*args, **kwargs)
+)
+
 
 def mlp(sizes, activation, output_activation=nn.Identity):
     layers = []
-    for j in range(len(sizes)-1):
-        act = activation if j < len(sizes)-2 else output_activation
-        layers += [nn.Linear(sizes[j], sizes[j+1]), act()]
+    for j in range(len(sizes) - 1):
+        act = activation if j < len(sizes) - 2 else output_activation
+        layers += [nn.Linear(sizes[j], sizes[j + 1]), act()]
 
     return nn.Sequential(*layers)
+
 
 def count_vars(module):
     return sum([np.prod(p.shape) for p in module.parameters()])
 
 
 class Critic(nn.Module):
-    def __init__(self,
-                 n_critics,
-                 dim_state,
-                 dim_actions,
-                 dim_goal,
-                 layers,
-                 goal_ids):
+    def __init__(self, n_critics, dim_state, dim_actions, dim_goal, layers, goal_ids):
         """
         Critic class that can use several critic networks (one for each cost).
         Modeling each cost by a critic and using the mixing weights to mix q-values
@@ -49,7 +50,10 @@ class Critic(nn.Module):
         super().__init__()
 
         # Initialize Q networks.
-        self.qs = [QNetFC(dim_state, dim_goal, dim_actions, layers, goal_ids[i]) for i in range(n_critics)]
+        self.qs = [
+            QNetFC(dim_state, dim_goal, dim_actions, layers, goal_ids[i])
+            for i in range(n_critics)
+        ]
         self.n_critics = n_critics
 
     def get_model(self):
@@ -73,15 +77,23 @@ class Critic(nn.Module):
         for i_q in range(self.n_critics):
             for param in self.qs[i_q].parameters():
                 tmp = np.product(param.size())
-                param.data.copy_(torch.from_numpy(
-                    params[cpt:cpt + tmp]).view(param.size()))
+                param.data.copy_(
+                    torch.from_numpy(params[cpt : cpt + tmp]).view(param.size())
+                )
                 cpt += tmp
 
     def get_params(self):
         """
         Returns parameters of the actor as numpy array
         """
-        return np.concatenate([np.hstack([v.data.cpu().numpy().flatten() for v in q.parameters()]).copy() for q in self.qs])
+        return np.concatenate(
+            [
+                np.hstack(
+                    [v.data.cpu().numpy().flatten() for v in q.parameters()]
+                ).copy()
+                for q in self.qs
+            ]
+        )
 
     def forward(self, obs):
         """
@@ -100,14 +112,8 @@ class Critic(nn.Module):
         return tuple(q.forward(obs) for q in self.qs)
 
 
-
 class QNetFC(nn.Module):
-    def __init__(self,
-                 dim_state,
-                 dim_goal,
-                 dim_actions,
-                 layers,
-                 goal_ids):
+    def __init__(self, dim_state, dim_goal, dim_actions, layers, goal_ids):
         """
         Fully connected Q-Network.
 
@@ -130,9 +136,13 @@ class QNetFC(nn.Module):
         self.dim_actions = dim_actions
         self.goal_ids = np.array(goal_ids)
 
-        self.input_ids =  np.concatenate([np.arange(self.dim_state), self.goal_ids + self.dim_state])
+        self.input_ids = np.concatenate(
+            [np.arange(self.dim_state), self.goal_ids + self.dim_state]
+        )
         self.layers = (dim_state + len(goal_ids),) + layers + (dim_actions,)
-        self.network = mlp(sizes=self.layers, activation=nn.ReLU, output_activation=nn.Identity)
+        self.network = mlp(
+            sizes=self.layers, activation=nn.ReLU, output_activation=nn.Identity
+        )
 
     @property
     def nb_params(self):
@@ -148,16 +158,18 @@ class QNetFC(nn.Module):
         cpt = 0
         for param in self.parameters():
             tmp = np.product(param.size())
-            param.data.copy_(torch.from_numpy(
-                params[cpt:cpt + tmp]).view(param.size()))
+            param.data.copy_(
+                torch.from_numpy(params[cpt : cpt + tmp]).view(param.size())
+            )
             cpt += tmp
-
 
     def get_params(self):
         """
         Returns parameters of the actor as numpy array
         """
-        return np.hstack([v.data.cpu().numpy().flatten() for v in self.parameters()]).copy()
+        return np.hstack(
+            [v.data.cpu().numpy().flatten() for v in self.parameters()]
+        ).copy()
 
     def act(self, state):
         with torch.no_grad():

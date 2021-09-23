@@ -4,9 +4,7 @@ import numpy as np
 
 
 class BaseCostFunction(ABC):
-    def __init__(self,
-                 scale_factor=1,
-                 range_constraints=()):
+    def __init__(self, scale_factor=1, range_constraints=()):
         """
         Base class for unique cost functions.
 
@@ -19,7 +17,7 @@ class BaseCostFunction(ABC):
         """
         self.scale_factor = scale_factor
         self.range_constraints = range_constraints
-        self.normalized_constraint = 1.  # set to max value
+        self.normalized_constraint = 1.0  # set to max value
 
     def sample_constraint(self):
         self.normalized_constraint = np.random.rand()
@@ -55,7 +53,9 @@ class BaseCostFunction(ABC):
             Value in the unit of the cost.
 
         """
-        return (constraint - self.range_constraints[0]) / (self.range_constraints[1] - self.range_constraints[0])
+        return (constraint - self.range_constraints[0]) / (
+            self.range_constraints[1] - self.range_constraints[0]
+        )
 
     def compute_constraint(self, normalized_constraint):
         """
@@ -72,7 +72,11 @@ class BaseCostFunction(ABC):
             Value in the unit of the cost.
 
         """
-        return normalized_constraint * (self.range_constraints[1] - self.range_constraints[0]) + self.range_constraints[0]
+        return (
+            normalized_constraint
+            * (self.range_constraints[1] - self.range_constraints[0])
+            + self.range_constraints[0]
+        )
 
     def check_constraint(self, value, normalized_constraint):
         """
@@ -115,7 +119,9 @@ class BaseCostFunction(ABC):
         pass
 
     @abstractmethod
-    def compute_cumulative_cost(self, previous_state, state, label_to_id, action, others={}):
+    def compute_cumulative_cost(
+        self, previous_state, state, label_to_id, action, others={}
+    ):
         """
         Computes cumulative costs
 

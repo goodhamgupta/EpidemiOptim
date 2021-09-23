@@ -8,18 +8,23 @@ from ipywidgets import *
 # Notebook utils
 # # # # # # # # # # # # # # # # # # # # # # # #
 
+
 def setup_diy(seed, run_eval, n_evals, deterministic_model):
 
     if run_eval:
         deterministic_model = False
 
-    algorithm, cost_function, env, params = setup_for_replay(get_repo_path() + "/data/data_for_visualization/NSGA/1/", seed, deterministic_model)
+    algorithm, cost_function, env, params = setup_for_replay(
+        get_repo_path() + "data/data_for_visualization/NSGA/1/",
+        seed,
+        deterministic_model,
+    )
 
     def run_env_with_actions(actions, reset_same_model):
 
-        additional_keys = ('costs', 'constraints')
+        additional_keys = ("costs", "constraints")
         # Setup saved values
-        episode = dict(zip(additional_keys, [[] for _ in range(len(additional_keys))] ))
+        episode = dict(zip(additional_keys, [[] for _ in range(len(additional_keys))]))
         env_states = []
         aggregated_costs = []
         dones = []
@@ -47,29 +52,32 @@ def setup_diy(seed, run_eval, n_evals, deterministic_model):
                 episode[k].append(info[k])
 
         # Form episode dict
-        episode.update(env_states=np.array(env_states),
-                       aggregated_costs=np.array(aggregated_costs),
-                       actions=np.array(actions),
-                       dones=np.array(dones))
+        episode.update(
+            env_states=np.array(env_states),
+            aggregated_costs=np.array(aggregated_costs),
+            actions=np.array(actions),
+            dones=np.array(dones),
+        )
 
-        aggregated_costs = np.sum(episode['aggregated_costs'])
-        costs = np.sum(episode['costs'], axis=0)
+        aggregated_costs = np.sum(episode["aggregated_costs"])
+        costs = np.sum(episode["costs"], axis=0)
         stats = env.unwrapped.get_data()
 
         return stats, costs
+
     global actions
-    actions = get_action_base('never')
+    actions = get_action_base("never")
     stats, costs = run_env_with_actions(actions, reset_same_model=False)
     fig, lines, plots_i, high, axs = setup_fig_notebook(stats)
 
-    #NSGA:
+    # NSGA:
 
     # Plot pareto front
     fig = plt.figure()
     ax = fig.add_subplot(111)
     sign = 1
-    a = sign * algorithm.res_eval['F'][:, 0]
-    b = sign * algorithm.res_eval['F'][:, 1]
+    a = sign * algorithm.res_eval["F"][:, 0]
+    b = sign * algorithm.res_eval["F"][:, 1]
     sc = ax.scatter(a, b, picker=5)
     data = sc.get_offsets().data
     off_sets = sc.get_offsets()
@@ -84,89 +92,122 @@ def setup_diy(seed, run_eval, n_evals, deterministic_model):
     sc.set_sizes(sizes)
     text = ax.text(0, 0, "", va="bottom", ha="left")
 
+    checkboxes = [
+        widgets.Checkbox(
+            value=False,
+            description="Week {}".format(i + 1),
+            disabled=False,
+            indent=False,
+        )
+        for i in range(53)
+    ]
+    button_widgets_ = dict(zip(["Week {}".format(i) for i in range(53)], checkboxes))
 
+    start = widgets.Dropdown(
+        options=[str(i) for i in range(1, 54)],
+        value="1",
+        description="# weeks before pattern starts",
+        layout=Layout(width="50%", height="80px"),
+        style={"description_width": "initial", "widget_width": "50%"},
+    )
 
-    checkboxes = [widgets.Checkbox(value=False,
-                                   description='Week {}'.format(i + 1),
-                                   disabled=False,
-                                   indent=False) for i in range(53)]
-    button_widgets_ = dict(zip(['Week {}'.format(i) for i in range(53)],
-                              checkboxes))
+    stop = widgets.Dropdown(
+        options=[str(i) for i in range(1, 55)],
+        value="54",
+        description="# weeks before pattern stops",
+        layout=Layout(width="50%", height="80px"),
+        style={"description_width": "initial", "widget_width": "50%"},
+    )
 
-    start = widgets.Dropdown(options=[str(i) for i in range(1, 54)],
-                             value='1',
-                             description="# weeks before pattern starts",
-                             layout=Layout(width='50%', height='80px'),
-                             style={'description_width': 'initial', 'widget_width': '50%'})
+    nb_weeks = widgets.Dropdown(
+        options=[str(i) for i in range(0, 54)],
+        value="0",
+        description="Duration of lockdown phase (weeks)",
+        layout=Layout(width="50%", height="80px"),
+        style={"description_width": "initial", "widget_width": "50%"},
+    )
 
-    stop = widgets.Dropdown(options=[str(i) for i in range(1, 55)],
-                             value='54',
-                             description="# weeks before pattern stops",
-                             layout=Layout(width='50%', height='80px'),
-                             style={'description_width': 'initial', 'widget_width': '50%'})
+    every = widgets.Dropdown(
+        options=[str(i) for i in range(1, 54)],
+        value="1",
+        description="Duration of the cycle or period (weeks)",
+        layout=Layout(width="50%", height="80px"),
+        style={"description_width": "initial", "widget_width": "50%"},
+    )
 
-    nb_weeks = widgets.Dropdown(options=[str(i) for i in range(0, 54)],
-                            value='0',
-                            description="Duration of lockdown phase (weeks)",
-                            layout=Layout(width='50%', height='80px'),
-                            style={'description_width': 'initial', 'widget_width': '50%'})
+    set_button = widgets.ToggleButton(
+        value=True,
+        description="Set to pattern",
+        disabled=False,
+        button_style="",  # 'success', 'info', 'warning', 'danger' or ''
+        layout=Layout(width="50%", height="80px"),
+        style={"description_width": "initial"},
+        tooltip="Description",
+        icon="check",  # (FontAwesome names without the `fa-` prefix)
+    )
 
-    every = widgets.Dropdown(options=[str(i) for i in range(1, 54)],
-                                value='1',
-                                description="Duration of the cycle or period (weeks)",
-                                layout=Layout(width='50%', height='80px'),
-                                style={'description_width': 'initial', 'widget_width': '50%'})
-
-    set_button = widgets.ToggleButton(value=True,
-                                      description='Set to pattern',
-                                      disabled=False,
-                                      button_style='',  # 'success', 'info', 'warning', 'danger' or ''
-                                      layout=Layout(width='50%', height='80px'),
-                                      style={'description_width': 'initial'},
-                                      tooltip='Description',
-                                      icon='check'  # (FontAwesome names without the `fa-` prefix)
-                                      )
-
-    @interact(start=start, stop=stop, nb_weeks=nb_weeks, every=every, set_button=set_button, **button_widgets_)
+    @interact(
+        start=start,
+        stop=stop,
+        nb_weeks=nb_weeks,
+        every=every,
+        set_button=set_button,
+        **button_widgets_
+    )
     def update(start, stop, nb_weeks, every, set_button, **button_widgets):
 
         start = int(start) - 1
         stop = int(stop) - 1
         nb_weeks = int(nb_weeks)
         every = int(every)
-        action_str = str(nb_weeks) + '_' + str(every)
+        action_str = str(nb_weeks) + "_" + str(every)
         if set_button:
-            print('Set to pattern. Closing {} weeks every {} weeks.'.format(nb_weeks, every))
+            print(
+                "Set to pattern. Closing {} weeks every {} weeks.".format(
+                    nb_weeks, every
+                )
+            )
         else:
-            print('Custom strategy.')
+            print("Custom strategy.")
 
             if every < nb_weeks:
-                print('When "every" is superior or equal to "nb_weeks", lockdown is always on.')
+                print(
+                    'When "every" is superior or equal to "nb_weeks", lockdown is always on.'
+                )
         actions = get_action_base(action_str, start, stop)
 
         if set_button:
             for i in range(53):
-                button_widgets_['Week {}'.format(i)].value = bool(actions[i])
+                button_widgets_["Week {}".format(i)].value = bool(actions[i])
         else:
             for i in range(53):
-                actions[i] = int(button_widgets['Week {}'.format(i)])
+                actions[i] = int(button_widgets["Week {}".format(i)])
 
-        stats, costs = run_env_with_actions(actions, reset_same_model=deterministic_model)
+        stats, costs = run_env_with_actions(
+            actions, reset_same_model=deterministic_model
+        )
 
         if run_eval:
-            all_costs = [run_env_with_actions(actions, reset_same_model=False)[1] for _ in range(n_evals)]
+            all_costs = [
+                run_env_with_actions(actions, reset_same_model=False)[1]
+                for _ in range(n_evals)
+            ]
             all_costs = np.array(all_costs)
             print(all_costs)
             means = all_costs.mean(axis=0)
             x, y = means
             stds = all_costs.std(axis=0)
-            msg = '\nEvaluation (over {} seeds):'.format(n_evals)
-            msg += '\n\t Death toll: {} +/- {}'.format(int(means[0]), int(stds[0]))
-            msg += '\n\t Economic cost: {:.2f} +/- {:.2f} B.'.format(int(means[1]), int(stds[1]))
+            msg = "\nEvaluation (over {} seeds):".format(n_evals)
+            msg += "\n\t Death toll: {} +/- {}".format(int(means[0]), int(stds[0]))
+            msg += "\n\t Economic cost: {:.2f} +/- {:.2f} B.".format(
+                int(means[1]), int(stds[1])
+            )
             print(msg)
         else:
             x, y = costs
-        print('\nDeath toll: {}, Economic cost: {:.2f} B.'.format(int(costs[0]), costs[1]))
+        print(
+            "\nDeath toll: {}, Economic cost: {:.2f} B.".format(int(costs[0]), costs[1])
+        )
         replot_stats(lines, stats, plots_i, cost_function, high)
 
         # update PAreto:
@@ -182,17 +223,17 @@ def setup_diy(seed, run_eval, n_evals, deterministic_model):
     return actions
 
 
-
-
 def setup_visualization(folder, algorithm_str, seed, deterministic_model):
     if seed is None:
         seed = np.random.randint(1e6)
-    if algorithm_str == 'DQN':
-        to_add = '0.5/'
+    if algorithm_str == "DQN":
+        to_add = "0.5/"
     else:
-        to_add = ''
-    algorithm, cost_function, env, params = setup_for_replay(folder + to_add, seed, deterministic_model)
-    if algorithm_str == 'NSGA':
+        to_add = ""
+    algorithm, cost_function, env, params = setup_for_replay(
+        folder + to_add, seed, deterministic_model
+    )
+    if algorithm_str == "NSGA":
         stats, msg = run_env(algorithm, env)
         fig, lines, plots_i, high, axs = setup_fig_notebook(stats)
 
@@ -200,8 +241,8 @@ def setup_visualization(folder, algorithm_str, seed, deterministic_model):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         sign = 1
-        a = sign * algorithm.res_eval['F'][:, 0]
-        b = sign * algorithm.res_eval['F'][:, 1]
+        a = sign * algorithm.res_eval["F"][:, 0]
+        b = sign * algorithm.res_eval["F"][:, 1]
         sc = ax.scatter(a, b, picker=5)
         data = sc.get_offsets().data
         data_max = np.max(data, axis=0)
@@ -240,7 +281,7 @@ def setup_visualization(folder, algorithm_str, seed, deterministic_model):
             sc.set_color(colors)
 
             # rerun env
-            weights = algorithm.res_eval['X'][closest_ind]
+            weights = algorithm.res_eval["X"][closest_ind]
             algorithm.policy.set_params(weights)
             stats, msg = run_env(algorithm, env)
             print(msg)
@@ -248,12 +289,18 @@ def setup_visualization(folder, algorithm_str, seed, deterministic_model):
 
             # refresh figure
             fig1.canvas.draw_idle()
-            tx = 'button=%d, x=%d, y=%d, xdata=%f, ydata=%f' % (event.button, event.x, event.y, event.xdata, event.ydata)
+            tx = "button=%d, x=%d, y=%d, xdata=%f, ydata=%f" % (
+                event.button,
+                event.x,
+                event.y,
+                event.xdata,
+                event.ydata,
+            )
             text.set_text(tx)
 
-        cid = fig.canvas.mpl_connect('button_press_event', onclick)
+        cid = fig.canvas.mpl_connect("button_press_event", onclick)
         plt.show()
-    elif 'GOAL_DQN' in algorithm_str:
+    elif "GOAL_DQN" in algorithm_str:
         if cost_function.use_constraints:
             goal = np.array([0.5, 1, 1])
         else:
@@ -265,59 +312,84 @@ def setup_visualization(folder, algorithm_str, seed, deterministic_model):
         if cost_function.use_constraints:
             # Plot constraints as dotted line.
             M_sanitary = cost_function.costs[0].compute_constraint(1)
-            line, = axs[1].plot([0, params['simulation_horizon']],
-                                [M_sanitary, M_sanitary],
-                                c='k',
-                                linestyle='--')
+            (line,) = axs[1].plot(
+                [0, params["simulation_horizon"]],
+                [M_sanitary, M_sanitary],
+                c="k",
+                linestyle="--",
+            )
             lines.append(line)
             M_economic = cost_function.costs[1].compute_constraint(1)
-            line, = axs[3].plot([0, params['simulation_horizon']],
-                                [M_economic, M_economic],
-                                c='k',
-                                linestyle='--')
+            (line,) = axs[3].plot(
+                [0, params["simulation_horizon"]],
+                [M_economic, M_economic],
+                c="k",
+                linestyle="--",
+            )
             lines.append(line)
 
             # Define the update function for model 2
-            def update(beta=widgets.FloatSlider(min=0, max=1, step=0.05, value=0.5),
-                       M_sanitary=widgets.FloatSlider(min=1000, max=62000, step=5000, value=62000),
-                       M_economic=widgets.FloatSlider(min=20, max=160, step=20, value=160)):
+            def update(
+                beta=widgets.FloatSlider(min=0, max=1, step=0.05, value=0.5),
+                M_sanitary=widgets.FloatSlider(
+                    min=1000, max=62000, step=5000, value=62000
+                ),
+                M_economic=widgets.FloatSlider(min=20, max=160, step=20, value=160),
+            ):
                 # normalize constraints
-                c_sanitary = cost_function.costs[0].compute_normalized_constraint(M_sanitary)
-                c_economic = cost_function.costs[1].compute_normalized_constraint(M_economic)
+                c_sanitary = cost_function.costs[0].compute_normalized_constraint(
+                    M_sanitary
+                )
+                c_economic = cost_function.costs[1].compute_normalized_constraint(
+                    M_economic
+                )
                 print(c_sanitary, c_economic)
-                stats, msg = run_env(algorithm, env, goal=np.array([beta, c_sanitary, c_economic]))
-                replot_stats(lines, stats, plots_i, cost_function, high, constraints=[c_sanitary, c_economic])
+                stats, msg = run_env(
+                    algorithm, env, goal=np.array([beta, c_sanitary, c_economic])
+                )
+                replot_stats(
+                    lines,
+                    stats,
+                    plots_i,
+                    cost_function,
+                    high,
+                    constraints=[c_sanitary, c_economic],
+                )
                 fig.canvas.draw_idle()
                 print(msg)
+
         else:
             # Define the update function for model 1
             def update(beta=widgets.FloatSlider(min=0, max=1, step=0.05, value=0.5)):
                 stats, msg = run_env(algorithm, env, goal=np.array([beta]))
                 print(msg)
-                msg = ''
+                msg = ""
                 replot_stats(lines, stats, plots_i, cost_function, high)
 
                 fig.canvas.draw_idle()
-        interact(update);
-    elif algorithm_str == 'DQN':
+
+        interact(update)
+    elif algorithm_str == "DQN":
         stats, msg = run_env(algorithm, env, first=True)
         fig, lines, plots_i, high, axs = setup_fig_notebook(stats)
 
         # Define the update function
         def update(beta=widgets.FloatSlider(min=0, max=1, step=0.05, value=0.5)):
-            print('Load a new DQN model for beta = {}'.format(beta))
+            print("Load a new DQN model for beta = {}".format(beta))
             # Load a new DQN model for each new beta
-            algorithm, cost_function, env, params = setup_for_replay(folder + str(beta) + '/', seed, deterministic_model)
+            algorithm, cost_function, env, params = setup_for_replay(
+                folder + str(beta) + "/", seed, deterministic_model
+            )
             stats, msg = run_env(algorithm, env, goal=np.array([beta]))
             print(msg)
-            msg = ''
+            msg = ""
             replot_stats(lines, stats, plots_i, cost_function, high)
             fig.canvas.draw_idle()
-        interact(update);
+
+        interact(update)
 
     else:
         raise NotImplementedError
-
 
 
 def setup_for_replay(folder, seed=np.random.randint(1e6), deterministic_model=False):
@@ -327,52 +399,60 @@ def setup_for_replay(folder, seed=np.random.randint(1e6), deterministic_model=Fa
     from epidemioptim.optimization import get_algorithm
 
     # print('Replaying: ', folder)
-    with open(folder + 'params.json', 'r') as f:
+    with open(folder + "params.json", "r") as f:
         params = json.load(f)
 
     if deterministic_model:
-        params['model_params']['stochastic'] = False
-    params['logdir'] = None#get_repo_path() + 'data/results/experiments' + params['logdir'].split('EpidemicDiscrete-v0')[1]
-    model = get_model(model_id=params['model_id'],
-                        params=params['model_params'])
+        params["model_params"]["stochastic"] = False
+    params[
+        "logdir"
+    ] = None  # get_repo_path() + 'data/results/experiments' + params['logdir'].split('EpidemicDiscrete-v0')[1]
+    model = get_model(model_id=params["model_id"], params=params["model_params"])
 
     # update reward params
-    params['cost_params']['N_region'] = int(model.pop_sizes[params['model_params']['region']])
-    params['cost_params']['N_country'] = int(np.sum(list(model.pop_sizes.values())))
+    params["cost_params"]["N_region"] = int(
+        model.pop_sizes[params["model_params"]["region"]]
+    )
+    params["cost_params"]["N_country"] = int(np.sum(list(model.pop_sizes.values())))
 
     set_seeds(seed)
 
-    cost_function = get_cost_function(cost_function_id=params['cost_id'],
-                                      params=params['cost_params'])
+    cost_function = get_cost_function(
+        cost_function_id=params["cost_id"], params=params["cost_params"]
+    )
 
     # Form the Gym-like environment
-    env = get_env(env_id=params['env_id'],
-                  cost_function=cost_function,
-                  model=model,
-                  simulation_horizon=params['simulation_horizon'],
-                  seed=seed)
+    env = get_env(
+        env_id=params["env_id"],
+        cost_function=cost_function,
+        model=model,
+        simulation_horizon=params["simulation_horizon"],
+        seed=seed,
+    )
 
     # Get DQN algorithm parameterized by beta
-    algorithm = get_algorithm(algo_id=params['algo_id'],
-                              env=env,
-                              params=params)
+    algorithm = get_algorithm(algo_id=params["algo_id"], env=env, params=params)
 
-
-    if params['algo_id'] == 'NSGAII':
-        algorithm.load_model(folder + 'res_eval.pk')
+    if params["algo_id"] == "NSGAII":
+        algorithm.load_model(folder + "res_eval.pk")
     else:
-        algorithm.load_model(folder + 'models/best_model.cp')
+        algorithm.load_model(folder + "models/best_model.cp")
 
     return algorithm, cost_function, env, params
 
+
 def replot_stats(lines, stats, plots_i, cost_function, high, constraints=None):
-    states = stats['stats_run']['to_plot']
-    lockdown = np.array(stats['history']['lockdown'])
+    states = stats["stats_run"]["to_plot"]
+    lockdown = np.array(stats["history"]["lockdown"])
     inds_lockdown = np.argwhere(lockdown == 1).flatten()
     for i in range(len(plots_i)):
         ind = plots_i[i]
         lines[i].set_ydata(states[ind])
-        lines[i + 4].set_offsets(np.array([inds_lockdown, np.ones([inds_lockdown.size]) * (high[i] * 0.98)]).transpose())
+        lines[i + 4].set_offsets(
+            np.array(
+                [inds_lockdown, np.ones([inds_lockdown.size]) * (high[i] * 0.98)]
+            ).transpose()
+        )
     if constraints:
         c_death = cost_function.costs[0].compute_constraint(constraints[0])
         lines[-2].set_ydata([c_death, c_death])
@@ -380,20 +460,22 @@ def replot_stats(lines, stats, plots_i, cost_function, high, constraints=None):
         lines[-1].set_ydata([c_eco, c_eco])
         print(c_death, c_eco)
 
+
 def run_env(algorithm, env, goal=None, first=False):
-    res, costs = algorithm.evaluate(n=1, goal=goal, reset_same_model= not first)
-    msg = '----------------\n'
+    res, costs = algorithm.evaluate(n=1, goal=goal, reset_same_model=not first)
+    msg = "----------------\n"
     for k in res.keys():
-        msg += str(k) + ': {:.2f}\n'.format(res[k])
+        msg += str(k) + ": {:.2f}\n".format(res[k])
     stats = env.unwrapped.get_data()
     return stats, msg
 
+
 def setup_fig_notebook(stats):
-    labels = stats['stats_run']['labels']
-    t = stats['history']['env_timesteps'][1:]
-    states = stats['stats_run']['to_plot']
-    lockdown = np.array(stats['history']['lockdown'])
-    legends = stats['stats_run']['legends']
+    labels = stats["stats_run"]["labels"]
+    t = stats["history"]["env_timesteps"][1:]
+    states = stats["stats_run"]["to_plot"]
+    lockdown = np.array(stats["history"]["lockdown"])
+    legends = stats["stats_run"]["legends"]
     time_step_size = 1
     inds_lockdown = np.argwhere(lockdown == 1).flatten() * time_step_size
     high = [3100, 67000, 1, 180]
@@ -406,7 +488,7 @@ def setup_fig_notebook(stats):
         ind = plots_i[i]
         axs[i].set_ylim([0, high[i]])
         axs[i].set_xlim([0, 365])
-        axs[i].set_xlabel('days')
+        axs[i].set_xlabel("days")
         axs[i].set_ylabel(labels[ind])
         if isinstance(states[ind], list):
             line, axs[i].plot(t, np.array(states[ind]).transpose())
@@ -414,28 +496,29 @@ def setup_fig_notebook(stats):
                 if legends[ind] is not None:
                     axs[i].legend(legends[ind])
         else:
-            line, = axs[i].plot(t, states[ind])
+            (line,) = axs[i].plot(t, states[ind])
         # line, = axs[i].plot(t, states[:, i])
         lines.append(line)
     for i in range(len(plots_i)):
-        line = axs[i].scatter(inds_lockdown, np.ones([inds_lockdown.size]) * (high[i] * 0.9),
-                              s=10,
-                              c='r')
+        line = axs[i].scatter(
+            inds_lockdown, np.ones([inds_lockdown.size]) * (high[i] * 0.9), s=10, c="r"
+        )
         lines.append(line)
     return fig1, lines, plots_i, high, axs
 
+
 def get_action_base(action_str, start=None, stop=None, duration=53):
     actions = np.zeros([duration])
-    if action_str == 'always':
+    if action_str == "always":
         actions = np.ones([duration])
         if isinstance(start, int):
             actions[:start] = 0
         if isinstance(stop, int):
             actions[stop:] = 0
-    elif action_str == 'never':
+    elif action_str == "never":
         actions = np.zeros([duration])
     else:
-        splitted_act_str = action_str.split('_')
+        splitted_act_str = action_str.split("_")
         nb_weeks = int(splitted_act_str[0])
         every = int(splitted_act_str[-1])
         start_week = 0
@@ -448,7 +531,7 @@ def get_action_base(action_str, start=None, stop=None, duration=53):
         on = True
         while counter < stop_week:
             if on:
-                actions[counter: min(counter + nb_weeks, stop_week)] = 1
+                actions[counter : min(counter + nb_weeks, stop_week)] = 1
                 counter += nb_weeks
                 on = False
             else:

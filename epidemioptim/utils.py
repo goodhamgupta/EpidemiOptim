@@ -8,7 +8,8 @@ import numpy as np
 import pandas as pd
 
 import torch
-plt.rcParams['figure.constrained_layout.use'] = True
+
+plt.rcParams["figure.constrained_layout.use"] = True
 # font = {'weight':'bold', 'size'   : 22}
 # import matplotlib
 # matplotlib.rc('font', **font)
@@ -19,7 +20,19 @@ plt.rcParams['figure.constrained_layout.use'] = True
 # # # # # # # # # # # # # # # # # # # # # # # #
 
 
-def plot_stats(t, states, labels, legends=None, title=None, lockdown=None, icu_capacity=None, axs=None, fig=None, time_jump=1, show=False):
+def plot_stats(
+    t,
+    states,
+    labels,
+    legends=None,
+    title=None,
+    lockdown=None,
+    icu_capacity=None,
+    axs=None,
+    fig=None,
+    time_jump=1,
+    show=False,
+):
     n_plots = len(states)
     if axs is None:
         print_a = True
@@ -39,15 +52,15 @@ def plot_stats(t, states, labels, legends=None, title=None, lockdown=None, icu_c
         else:
             axs[i].plot(t, states[i], linewidth=5)
 
-        axs[i].set_ylabel(labels[i], fontweight='bold')
+        axs[i].set_ylabel(labels[i], fontweight="bold")
         if i == 4:
-            axs[i].set_xlabel('days', fontweight='bold')
+            axs[i].set_xlabel("days", fontweight="bold")
         axs[i].set_xticks([0, 100, 200, 300])
-        axs[i].spines['top'].set_linewidth(2)
-        axs[i].spines['right'].set_linewidth(2)
-        axs[i].spines['bottom'].set_linewidth(2)
-        axs[i].spines['left'].set_linewidth(2)
-        axs[i].tick_params(width=int(3), direction='in', length=5, labelsize='small')
+        axs[i].spines["top"].set_linewidth(2)
+        axs[i].spines["right"].set_linewidth(2)
+        axs[i].spines["bottom"].set_linewidth(2)
+        axs[i].spines["left"].set_linewidth(2)
+        axs[i].tick_params(width=int(3), direction="in", length=5, labelsize="small")
         # axs[i].set_xticklabels([str(x) if isinstance(x, np.int64) else '{:.2f}'.format(x) for x in axs[i].get_xticks()], {'weight': 'bold'})
         # axs[i].set_yticklabels(axs[i].get_yticks(), {'weight': 'bold'})
 
@@ -63,7 +76,7 @@ def plot_stats(t, states, labels, legends=None, title=None, lockdown=None, icu_c
             max_i = np.max(states[i])
             range_i = max_i - np.min(states[i])
             y_lockdown = np.ones([inds_lockdown.size]) * max_i + 0.05 * range_i
-            axs[i].scatter(inds_lockdown, y_lockdown, s=10, c='red')
+            axs[i].scatter(inds_lockdown, y_lockdown, s=10, c="red")
 
     if title:
         fig.suptitle(title)
@@ -72,7 +85,7 @@ def plot_stats(t, states, labels, legends=None, title=None, lockdown=None, icu_c
     return axs, fig
 
 
-def get_stat_func(line='mean', err='std'):
+def get_stat_func(line="mean", err="std"):
     """
     Wrapper around statistics measures: central tendencies (mean, median), and errors (std, sem, percentiles, etc)
 
@@ -89,47 +102,56 @@ def get_stat_func(line='mean', err='std'):
         Functions ready to apply to data (including data containing nans) for the central tendency, low error and high error.
 
     """
-    if line == 'mean':
+    if line == "mean":
+
         def line_f(a):
             return np.nanmean(a, axis=0)
-    elif line == 'median':
+
+    elif line == "median":
+
         def line_f(a):
             return np.nanmedian(a, axis=0)
+
     else:
         raise NotImplementedError
 
-    if err == 'std':
+    if err == "std":
 
         def err_plus(a):
             return line_f(a) + np.nanstd(a, axis=0)
 
         def err_minus(a):
             return line_f(a) - np.nanstd(a, axis=0)
-    elif err == 'sem':
+
+    elif err == "sem":
 
         def err_plus(a):
             return line_f(a) + np.nanstd(a, axis=0) / np.sqrt(a.shape[0])
 
         def err_minus(a):
             return line_f(a) - np.nanstd(a, axis=0) / np.sqrt(a.shape[0])
-    elif err == 'range':
+
+    elif err == "range":
 
         def err_plus(a):
             return np.nanmax(a, axis=0)
 
         def err_minus(a):
             return np.nanmin(a, axis=0)
-    elif err == 'interquartile':
+
+    elif err == "interquartile":
 
         def err_plus(a):
             return np.nanpercentile(a, q=75, axis=0)
 
         def err_minus(a):
             return np.nanpercentile(a, q=25, axis=0)
+
     else:
         raise NotImplementedError
 
     return line_f, err_minus, err_plus
+
 
 # # # # # # # # # # # # # # # # # # # # # # # #
 # Distributions
@@ -180,12 +202,13 @@ class NormalDist(BaseDist):
     stochastic: bool
         Whether the sampling is stochastic.
     """
+
     def __init__(self, params, stochastic):
         super(NormalDist, self).__init__(params, stochastic)
-        assert len(self.params) == 2, 'params should be a list of length 2: [mean, std]'
+        assert len(self.params) == 2, "params should be a list of length 2: [mean, std]"
         if self.params[1] == 0:
             self.params[1] += 1e-6
-        assert self.params[1] > 0, 'params should be a list of length 2: [mean, std]'
+        assert self.params[1] > 0, "params should be a list of length 2: [mean, std]"
         self.mean, self.std = self.params
 
     def sample(self, n=1):
@@ -207,12 +230,13 @@ class LogNormalDist(BaseDist):
     stochastic: bool
         Whether the sampling is stochastic.
     """
+
     def __init__(self, params, stochastic):
         super(LogNormalDist, self).__init__(params, stochastic)
-        assert len(self.params) == 2, 'params should be a list of length 2: [mean, std]'
+        assert len(self.params) == 2, "params should be a list of length 2: [mean, std]"
         if self.params[1] == 0:
             self.params[1] += 1e-6
-        assert self.params[1] > 0, 'params should be a list of length 2: [mean, std]'
+        assert self.params[1] > 0, "params should be a list of length 2: [mean, std]"
         self.mean, self.std = self.params
 
     def sample(self, n=1):
@@ -234,9 +258,10 @@ class ContUniformDist(BaseDist):
     stochastic: bool
         Whether the sampling is stochastic.
     """
+
     def __init__(self, params, stochastic):
         super(ContUniformDist, self).__init__(params, stochastic)
-        assert len(self.params) == 2, 'params should be a list of length 2: [min, max]'
+        assert len(self.params) == 2, "params should be a list of length 2: [min, max]"
         self.min, self.max = self.params
 
     def sample(self, n=1):
@@ -258,12 +283,13 @@ class DiscreteUniformDist(BaseDist):
     stochastic: bool
         Whether the sampling is stochastic.
     """
+
     def __init__(self, params, stochastic):
         super(DiscreteUniformDist, self).__init__(params, stochastic)
-        assert len(self.params) == 2, 'params should be a list of length 2: [min, max]'
+        assert len(self.params) == 2, "params should be a list of length 2: [min, max]"
         self.min, self.max = self.params
-        assert isinstance(self.min, int), 'params should be int'
-        assert isinstance(self.max, int), 'params should be int'
+        assert isinstance(self.min, int), "params should be int"
+        assert isinstance(self.max, int), "params should be int"
 
     def sample(self, n=1):
         if self.stochastic:
@@ -284,9 +310,10 @@ class DiracDist(BaseDist):
     stochastic: bool
         Whether the sampling is stochastic.
     """
+
     def __init__(self, params, stochastic):
         super(DiracDist, self).__init__(params, stochastic)
-        assert isinstance(float(params), float), 'params should be a single value'
+        assert isinstance(float(params), float), "params should be a single value"
 
     def sample(self, n=1):
         samples = np.array([self.params] * n)
@@ -306,9 +333,15 @@ class DiscreteDist(BaseDist):
             Whether the sampling is stochastic.
         """
         super(DiscreteDist, self).__init__(params, stochastic)
-        assert isinstance(params, list), "params should be a list of two lists: first the values, second the probabilities"
-        assert len(params) == 3, "the third parameter must be the value in the deterministic case"
-        assert len(params[0]) == len(params[1]), "two lists in params should be the same lengths (values and probas)"
+        assert isinstance(
+            params, list
+        ), "params should be a list of two lists: first the values, second the probabilities"
+        assert (
+            len(params) == 3
+        ), "the third parameter must be the value in the deterministic case"
+        assert len(params[0]) == len(
+            params[1]
+        ), "two lists in params should be the same lengths (values and probas)"
         self.values = np.array(params[0])
         self.probabilities = np.array(params[1])
         self.deterministic_value = np.array([params[2]])
@@ -320,19 +353,20 @@ class DiscreteDist(BaseDist):
             samples = np.array([self.deterministic_value] * n)
         return float(samples) if n == 1 else samples
 
+
 # # # # # # # # # # # # # # # # # # # # # # # #
 # Others
 # # # # # # # # # # # # # # # # # # # # # # # #
 
 
 def get_repo_path():
-    dir_path = os.path.dirname(os.path.realpath(__file__)).split('/')
-    if dir_path.count('epidemioptim') == 1:
-        start_ind = dir_path.index('epidemioptim')
+    dir_path = os.path.dirname(os.path.realpath(__file__)).split("/")
+    if dir_path.count("epidemioptim") == 1:
+        start_ind = dir_path.index("epidemioptim")
     else:
-        start_ind = - (list(reversed(dir_path)).index('epidemioptim') + 1)
+        start_ind = -(list(reversed(dir_path)).index("epidemioptim") + 1)
 
-    repo_path = '/'.join(dir_path[:start_ind]) + '/'
+    repo_path = "/".join(dir_path[:start_ind]) + "/"
     return repo_path
 
 
@@ -350,22 +384,30 @@ def get_logdir(params):
 
     """
     repo_path = get_repo_path()
-    logdir = repo_path + 'data/results/' + params['env_id'] + '/' + params['algo_id'] + '/' + params['expe_name']
+    logdir = (
+        repo_path
+        + "data/results/"
+        + params["env_id"]
+        + "/"
+        + params["algo_id"]
+        + "/"
+        + params["expe_name"]
+    )
     if os.path.exists(logdir):
-        directory = logdir + '_'
-        trial_id = params['trial_id']
+        directory = logdir + "_"
+        trial_id = params["trial_id"]
         i = 0
         while True:
-            logdir = directory + str(trial_id + i * 100) + '/'
+            logdir = directory + str(trial_id + i * 100) + "/"
             if not os.path.exists(logdir):
                 break
             i += 1
     else:
-        logdir += '/'
+        logdir += "/"
     os.makedirs(logdir)
-    print('Logging to: ', logdir)
-    params['logdir'] = logdir
-    with open(logdir + 'params.json', 'w') as f:
+    print("Logging to: ", logdir)
+    params["logdir"] = logdir
+    with open(logdir + "params.json", "w") as f:
         json.dump(params, f)
     return params
 
@@ -462,6 +504,7 @@ def compute_pareto_front(costs: list):
             front_ids.append(ind1)
     return front_ids
 
+
 class Logger:
     def __init__(self, keys, logdir):
         """
@@ -499,37 +542,45 @@ class Logger:
 
     def save(self):
         data = pd.DataFrame(self.data)
-        data.to_csv(self.logdir + 'progress.csv')
+        data.to_csv(self.logdir + "progress.csv")
 
     def print_last(self):
-        msg = '---------------\n'
+        msg = "---------------\n"
         goal_keys = []
         for k in self.keys:
-            if 'g:' in k:
+            if "g:" in k:
                 goal_keys.append(k)
         if len(goal_keys) > 0:
             for k in self.keys:
-                if 'g:' not in k:
-                    msg += k + ': {:.2f}\n\t'.format(self.data[k][-1])
-            goals = set([k.split('g:')[1][1:].split(':')[0] for k in goal_keys])
+                if "g:" not in k:
+                    msg += k + ": {:.2f}\n\t".format(self.data[k][-1])
+            goals = set([k.split("g:")[1][1:].split(":")[0] for k in goal_keys])
             for g in sorted(list(goals)):
                 nb_costs = (sum([g in k for k in goal_keys]) - 2) // 2
-                key_mean = 'Eval, g: {}: mean_agg'.format(g)
-                key_std = 'Eval, g: {}: std_agg'.format(g)
-                keys_costs_mean = ['Eval, g: {}: mean_C{}'.format(g, i) for i in range(nb_costs)]
-                keys_costs_std = ['Eval, g: {}: std_C{}'.format(g, i) for i in range(nb_costs)]
+                key_mean = "Eval, g: {}: mean_agg".format(g)
+                key_std = "Eval, g: {}: std_agg".format(g)
+                keys_costs_mean = [
+                    "Eval, g: {}: mean_C{}".format(g, i) for i in range(nb_costs)
+                ]
+                keys_costs_std = [
+                    "Eval, g: {}: std_C{}".format(g, i) for i in range(nb_costs)
+                ]
                 for i in range(nb_costs):
                     if i == 0:
-                        msg += 'Eval, g: {}, '.format(g)
-                    msg += 'C{}: {:.2f} +/- {:.2f}, '.format(i+1, self.data[keys_costs_mean[i]][-1], self.data[keys_costs_std[i]][-1])
-                msg += 'Agg: {:.2f} +/- {:.2f}\n\t'.format(self.data[key_mean][-1], self.data[key_std][-1])
+                        msg += "Eval, g: {}, ".format(g)
+                    msg += "C{}: {:.2f} +/- {:.2f}, ".format(
+                        i + 1,
+                        self.data[keys_costs_mean[i]][-1],
+                        self.data[keys_costs_std[i]][-1],
+                    )
+                msg += "Agg: {:.2f} +/- {:.2f}\n\t".format(
+                    self.data[key_mean][-1], self.data[key_std][-1]
+                )
 
         else:
             for k in self.keys:
-                msg += k + ': {:.2f}\n\t'.format(self.data[k][-1])
+                msg += k + ": {:.2f}\n\t".format(self.data[k][-1])
 
         print(msg)
-        with open(self.logdir + 'log.txt', "a") as f:
+        with open(self.logdir + "log.txt", "a") as f:
             f.write(msg)
-
-

@@ -1,6 +1,10 @@
-from epidemioptim.environments.models.prague_ode_seirah_model import PragueOdeSeirahModel
+from epidemioptim.environments.models.prague_ode_seirah_model import (
+    PragueOdeSeirahModel,
+)
 
-list_models = ['prague_seirah']
+list_models = ["prague_seirah"]
+
+
 def get_model(model_id, params={}):
     """
     Get the epidemiological model.
@@ -14,11 +18,10 @@ def get_model(model_id, params={}):
 
     """
     assert model_id in list_models, "Model id should be in " + str(list_models)
-    if model_id == 'prague_seirah':
+    if model_id == "prague_seirah":
         return PragueOdeSeirahModel(**params)
     else:
         raise NotImplementedError
 
-#TODO: add tests for model registration
 
-
+# TODO: add tests for model registration

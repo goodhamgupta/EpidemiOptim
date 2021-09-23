@@ -4,11 +4,13 @@ import numpy as np
 
 
 class BaseModel(ABC):
-    def __init__(self,
-                 internal_states_labels: list,
-                 internal_params_labels: list,
-                 range_delay=None,
-                 stochastic=False):
+    def __init__(
+        self,
+        internal_states_labels: list,
+        internal_params_labels: list,
+        range_delay=None,
+        stochastic=False,
+    ):
         """This is an abstract class for epidemiological models.
 
         Parameters
@@ -96,7 +98,6 @@ class BaseModel(ABC):
         if delay > 0:
             return self.run_n_steps(n=delay)[-1]
 
-
     @abstractmethod
     def _sample_initial_state(self):
         """
@@ -114,9 +115,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def run_n_steps(self,
-                    current_state=None,
-                    n=1):
+    def run_n_steps(self, current_state=None, n=1):
         """
         Runs the model for n steps.
 
@@ -151,13 +150,25 @@ class BaseModel(ABC):
         tuple
             tuple of the model parameters in the order of the list of labels
         """
-        return tuple([self.current_internal_params[k] for k in self.internal_params_labels])
+        return tuple(
+            [self.current_internal_params[k] for k in self.internal_params_labels]
+        )
 
     def _reset_state(self):
         """
         Resets model state to initial state.
         """
-        self.current_state = dict(zip(self.internal_states_labels, np.array([self.initial_state['{}0'.format(s)] for s in self.internal_states_labels])))
+        self.current_state = dict(
+            zip(
+                self.internal_states_labels,
+                np.array(
+                    [
+                        self.initial_state["{}0".format(s)]
+                        for s in self.internal_states_labels
+                    ]
+                ),
+            )
+        )
 
     def _get_current_state(self):
         """
@@ -165,7 +176,9 @@ class BaseModel(ABC):
 
 
         """
-        return np.array([self.current_state['{}'.format(s)] for s in self.internal_states_labels])
+        return np.array(
+            [self.current_state["{}".format(s)] for s in self.internal_states_labels]
+        )
 
     def _set_current_state(self, current_state):
         """
@@ -193,9 +206,4 @@ class BaseModel(ABC):
             Dict where keys are state labels and values are states.
 
         """
-        return  zip(self.internal_states_labels, states.transpose())
-
-
-
-
-
+        return zip(self.internal_states_labels, states.transpose())

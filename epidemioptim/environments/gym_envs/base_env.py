@@ -5,15 +5,17 @@ from abc import abstractmethod
 
 gym.logger.set_level(40)
 
+
 class BaseEnv(gym.Env):
-    def __init__(self,
-                 cost_function,
-                 model,
-                 dim_action,
-                 simulation_horizon,
-                 discrete=True,
-                 seed=np.random.randint(1e6)
-                 ):
+    def __init__(
+        self,
+        cost_function,
+        model,
+        dim_action,
+        simulation_horizon,
+        discrete=True,
+        seed=np.random.randint(1e6),
+    ):
         """
         Base class for epidemic-based environments.
 
@@ -46,12 +48,16 @@ class BaseEnv(gym.Env):
         self.reset()
 
         self.dim_state = self.env_state.size
-        self.observation_space = Box(-np.inf * np.ones([self.dim_state]), np.inf * np.ones([self.dim_state]))
+        self.observation_space = Box(
+            -np.inf * np.ones([self.dim_state]), np.inf * np.ones([self.dim_state])
+        )
         self.dim_action = dim_action
         if discrete:
             self.action_space = Discrete(dim_action)
         else:
-            self.action_space = Box(- np.float32(np.ones([dim_action])), np.float32(np.ones([dim_action])))
+            self.action_space = Box(
+                -np.float32(np.ones([dim_action])), np.float32(np.ones([dim_action]))
+            )
 
     @abstractmethod
     def reset(self):

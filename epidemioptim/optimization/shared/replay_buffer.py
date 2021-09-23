@@ -1,8 +1,9 @@
-#code from openai
-#https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
+# code from openai
+# https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
 
 import numpy as np
 import random
+
 
 class ReplayBuffer(object):
     def __init__(self, size):
@@ -20,8 +21,19 @@ class ReplayBuffer(object):
     def __len__(self):
         return len(self._storage)
 
-    def push(self, state, action, aggregated_cost, costs, next_state, goal, done, constraints):
-        data = (state, action, aggregated_cost, costs, next_state, goal, done, constraints)
+    def push(
+        self, state, action, aggregated_cost, costs, next_state, goal, done, constraints
+    ):
+        data = (
+            state,
+            action,
+            aggregated_cost,
+            costs,
+            next_state,
+            goal,
+            done,
+            constraints,
+        )
 
         if self._next_idx >= len(self._storage):
             self._storage.append(data)
@@ -30,10 +42,28 @@ class ReplayBuffer(object):
         self._next_idx = int((self._next_idx + 1) % self._maxsize)
 
     def _encode_sample(self, idxes):
-        obses_t, actions, costs_aggregated, costs_list, obses_tp1, goals, dones, constraints = [], [], [], [], [], [], [], []
+        (
+            obses_t,
+            actions,
+            costs_aggregated,
+            costs_list,
+            obses_tp1,
+            goals,
+            dones,
+            constraints,
+        ) = ([], [], [], [], [], [], [], [])
         for i in idxes:
             data = self._storage[i]
-            obs_t, action, aggregated_cost, costs, obs_tp1, goal, done, constraint = data
+            (
+                obs_t,
+                action,
+                aggregated_cost,
+                costs,
+                obs_tp1,
+                goal,
+                done,
+                constraint,
+            ) = data
             obses_t.append(np.array(obs_t, copy=False))
             actions.append(np.array(action, copy=False))
             costs_aggregated.append(aggregated_cost)
@@ -42,7 +72,16 @@ class ReplayBuffer(object):
             dones.append(done)
             goals.append(np.array(goal, copy=False))
             constraints.append(np.array(constraint, copy=False))
-        return np.array(obses_t), np.array(actions), np.array(costs_aggregated), np.array(costs_list), np.array(obses_tp1), np.array(goals), np.array(dones), np.array(constraints)
+        return (
+            np.array(obses_t),
+            np.array(actions),
+            np.array(costs_aggregated),
+            np.array(costs_list),
+            np.array(obses_tp1),
+            np.array(goals),
+            np.array(dones),
+            np.array(constraints),
+        )
 
     def sample(self, batch_size):
         """Sample a batch of experiences.
@@ -72,6 +111,3 @@ class ReplayBuffer(object):
         """
         idxes = [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
         return self._encode_sample(idxes)
-
-
-

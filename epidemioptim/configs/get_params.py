@@ -1,4 +1,3 @@
-
 def get_params(config_id, expe_name=None):
     """
     Get experiment parameters.
@@ -16,13 +15,13 @@ def get_params(config_id, expe_name=None):
         Dictionary of experiment parameters.
 
     """
-    if config_id == 'dqn':
+    if config_id == "dqn":
         from epidemioptim.configs.dqn import params
-    elif config_id == 'goal_dqn':
+    elif config_id == "goal_dqn":
         from epidemioptim.configs.goal_dqn import params
-    elif config_id == 'goal_dqn_constraints':
+    elif config_id == "goal_dqn_constraints":
         from epidemioptim.configs.goal_dqn_constraints import params
-    elif config_id == 'nsga_ii':
+    elif config_id == "nsga_ii":
         from epidemioptim.configs.nsga_ii import params
     else:
         raise NotImplementedError
